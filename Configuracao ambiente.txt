@@ -16,3 +16,9 @@ docker container run --name mongo -p 27017:27017 -e AUTH=no -d mongodb/mongodb-c
 # Instalando o MongoSH
 # https://www.mongodb.com/try/download/shell
 # MacOS: copia o binário para /usr/local/bin
+
+# Configura o repositório Git
+git init
+git remote add origin git@github.com:IvanCSantos/bd2m2.1.git
+git rebase origin/main 
+git push --set-upstream origin main
