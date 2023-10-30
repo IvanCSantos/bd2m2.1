@@ -1,0 +1,18 @@
+# Instala o Docker https://docs.docker.com/get-docker/
+
+# Subindo o container do MySQL
+docker container run --name test-db -p 3306:3306 -e MYSQL_ROOT_PASSWORD=a1b2c3d4 -e MYSQL_ROOT_HOST=% mysql/mysql-server:5.7
+
+# Importação do modelo informado pelo professor https://github.com/datacharmer/test_db.git
+docker container ls
+docker container exec -it <id do container> bash
+yum install git
+git clone https://github.com/datacharmer/test_db.git
+cd test_db
+mysql -u root -p < employees.sql
+
+# Subindo o container do MongoDB
+docker container run --name mongo -p 27017:27017 -e AUTH=no -d mongodb/mongodb-community-server:latest
+# Instalando o MongoSH
+# https://www.mongodb.com/try/download/shell
+# MacOS: copia o binário para /usr/local/bin
