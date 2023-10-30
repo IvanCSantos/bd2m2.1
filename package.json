@@ -1,0 +1,19 @@
+{
+  "name": "trabalhom2.1",
+  "version": "1.0.0",
+  "description": "Trabalho da disciplina de Banco de Dados 2 - UNIVALI",
+  "main": "trabalho.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/IvanCSantos/bd2m2.1.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/IvanCSantos/bd2m2.1/issues"
+  },
+  "homepage": "https://github.com/IvanCSantos/bd2m2.1#readme"
+}
