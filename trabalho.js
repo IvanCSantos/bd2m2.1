@@ -55,8 +55,8 @@ const DepartmentManager = sequelize.define('DepartmentManager', {
     from_date: { type: DataTypes.DATEONLY },
     to_date: { type: DataTypes.DATEONLY }
 }, { tableName: 'dept_manager', timestamps: false });
-Employee.belongsToMany(Department, { through: DepartmentManager, foreignKey: 'emp_no'});
-Department.belongsToMany(Employee, { through: DepartmentManager, foreignKey: 'dept_no'});
+Department.hasMany(DepartmentManager, { foreignKey: 'dept_no'});
+Employee.hasMany(DepartmentManager, { foreignKey: 'emp_no'});
 
 let testConnection = async function(){
     try {
@@ -75,3 +75,13 @@ let testConnection = async function(){
 }
 //testConnection();
 
+let fetchAllEmployees = async function() {
+    try {
+        //let employees =  await Employee.findAll({ include: [ Title, Salary, Department, DepartmentManager ]});
+        let employees =  await Employee.findOne({ where: { emp_no: 10001 }, include: [ Title, Salary, Department, DepartmentManager ]});
+        console.log(employees);
+    } catch (error) { 
+        console.error("Error log", error);
+    }
+};
+fetchAllEmployees();
