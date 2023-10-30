@@ -22,3 +22,10 @@ git init
 git remote add origin git@github.com:IvanCSantos/bd2m2.1.git
 git rebase origin/main 
 git push --set-upstream origin main
+
+# Inicia o NPM
+npm init
+
+# Instala dependencias
+npm install --save sequelize
+npm install --save mysql2
