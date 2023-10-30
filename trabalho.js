@@ -1,4 +1,4 @@
-// Conexão e mapeamento do Bando de Dados usando ORM Sequelize
+// Conexão e mapeamento do Banco de Dados MySQL usando ORM Sequelize
 const { Sequelize, DataTypes, DATEONLY} = require('sequelize'); //npm install --save sequelize , npm install --save mysql2
 const MYSQL_IP="localhost";
 const MYSQL_LOGIN="root";
@@ -8,6 +8,12 @@ const sequelize = new Sequelize(DATABASE , MYSQL_LOGIN, MYSQL_PASSWORD, {
   host: MYSQL_IP,
   dialect: "mysql"
 });
+
+// Conexão do Banco de Dados MongoDB
+const { MongoClient } = require('mongodb');
+const uri = 'mongodb://localhost:27017/'; //$ mongo mongodb://<host>:<port>
+const client = new MongoClient(uri);
+
 
 // Modelo employess
 const Employee = sequelize.define('Employee', {
@@ -75,13 +81,63 @@ let testConnection = async function(){
 }
 //testConnection();
 
-let fetchAllEmployees = async function() {
+function printEmployeesList(employee) {
+ 
+}
+
+let getAllEmployeesFromMySQL = async function() {
     try {
+        // Eager Loading resultou em erro devido a grande quantidade de dados
+        // FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory
         //let employees =  await Employee.findAll({ include: [ Title, Salary, Department, DepartmentManager ]});
-        let employees =  await Employee.findOne({ where: { emp_no: 10001 }, include: [ Title, Salary, Department, DepartmentManager ]});
-        console.log(employees);
+        //let employees =  await Employee.findOne({ where: { emp_no: 10001 }, include: [ Title, Salary, Department, DepartmentManager ]});
+        //let employess = await Employee.findAll({ include: [ { model: Title,}, { model: Salary,},],});
+
+
+        // Lazy Loading
+        //let employees =  await Employee.findAll({ include: [ Title, Salary, Department, DepartmentManager ]});
+        let employees =  await Employee.findAll();
+        //let employees =  await Employee.findByPk(10001);
+        //let titles = await employees.getTitles();
+        //let title = await employees.getTitles();
+        //console.log(JSON.stringify(title));
+        
+        // Dessa forma deu timeout
+
+        
+        employees.forEach(async function (employee) {
+            let newEmployee = employee.dataValues;
+            let titles = await employee.getTitles();
+            let salaries = await employee.getSalaries();
+            
+
+            let newTitles = []
+            titles.forEach((title) => {
+                newTitles.push({
+                    title: title.dataValues.title,
+                    from_date: title.dataValues.from_date,
+                    to_date: title.dataValues.to_date
+                });
+            });
+            newEmployee.titles = newTitles;
+
+            let newSalaries = []
+            salaries.forEach((salary) => {
+                newSalaries.push({
+                    salary: salary.dataValues.salary,
+                    from_date: salary.dataValues.from_date,
+                    to_date: salary.dataValues.to_date,
+                });
+            });
+            newEmployee.salaries = newSalaries;
+
+            console.log(newEmployee);
+        });
+
+        //employees.forEach(mysqlToJSON)
+        //console.log(employees);
     } catch (error) { 
         console.error("Error log", error);
     }
 };
-fetchAllEmployees();
+getAllEmployeesFromMySQL();

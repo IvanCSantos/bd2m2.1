@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/IvanCSantos/bd2m2.1#readme",
   "dependencies": {
+    "mongodb": "^6.2.0",
     "mysql2": "^3.6.2",
     "sequelize": "^6.33.0"
   }
