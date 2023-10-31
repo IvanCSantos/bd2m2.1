@@ -1,5 +1,5 @@
 // Conexão e mapeamento do Banco de Dados MySQL usando ORM Sequelize
-const { Sequelize, DataTypes, DATEONLY} = require('sequelize'); //npm install --save sequelize , npm install --save mysql2
+const { Sequelize, DataTypes} = require('sequelize'); //npm install --save sequelize , npm install --save mysql2
 const MYSQL_IP="localhost";
 const MYSQL_LOGIN="root";
 const MYSQL_PASSWORD="a1b2c3d4";
@@ -9,10 +9,25 @@ const sequelize = new Sequelize(DATABASE , MYSQL_LOGIN, MYSQL_PASSWORD, {
   dialect: "mysql"
 });
 
+let connTest = async function() {
+    try {
+        await sequelize.authenticate();
+        console.log('Connection has been established successfully.');
+    } catch (error) {
+        console.error('Unable to connect to the database:', error);
+    }
+};
+connTest();
+
 // Conexão do Banco de Dados MongoDB
-const { MongoClient } = require('mongodb');
-const uri = 'mongodb://localhost:27017/'; //$ mongo mongodb://<host>:<port>
-const client = new MongoClient(uri);
+// const { MongoClient } = require('mongodb');
+// const uri = 'mongodb://localhost:27017/'; //$ mongo mongodb://<host>:<port>
+// const client = new MongoClient(uri);
+// client.connect().then(function() {
+//     client.db().admin().listDatabases().then(function(databases){
+//         console.log("Databases: ", databases);
+//     });
+// });
 
 
 // Modelo employess
@@ -64,80 +79,36 @@ const DepartmentManager = sequelize.define('DepartmentManager', {
 Department.hasMany(DepartmentManager, { foreignKey: 'dept_no'});
 Employee.hasMany(DepartmentManager, { foreignKey: 'emp_no'});
 
-let testConnection = async function(){
+let employeeList = []
+let getEmployeesFromMySQL = async function() {
     try {
-        sequelize.authenticate();
-        console.log('Connection has been established successfully.');
-    } catch (error) {
-        console.error('Unable to connect to the database:', error);
-    }
-    try {
-      let employees = await Employee.findOne({ where: { emp_no: 10001}, include: Title });
+        let amount = await Employee.count();
+        let pages = Math.ceil(amount/1000);
 
-      console.log(employees.dataValues.Titles.dataValues, employees.dataValues.Titles.dataValues);
-    } catch (error) {
-      console.error("Error log", error);
-    }
-}
-//testConnection();
-
-function printEmployeesList(employee) {
- 
-}
-
-let getAllEmployeesFromMySQL = async function() {
-    try {
-        // Eager Loading resultou em erro devido a grande quantidade de dados
-        // FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory
-        //let employees =  await Employee.findAll({ include: [ Title, Salary, Department, DepartmentManager ]});
-        //let employees =  await Employee.findOne({ where: { emp_no: 10001 }, include: [ Title, Salary, Department, DepartmentManager ]});
-        //let employess = await Employee.findAll({ include: [ { model: Title,}, { model: Salary,},],});
-
-
-        // Lazy Loading
-        //let employees =  await Employee.findAll({ include: [ Title, Salary, Department, DepartmentManager ]});
-        let employees =  await Employee.findAll();
-        //let employees =  await Employee.findByPk(10001);
-        //let titles = await employees.getTitles();
-        //let title = await employees.getTitles();
-        //console.log(JSON.stringify(title));
-        
-        // Dessa forma deu timeout
-
-        
-        employees.forEach(async function (employee) {
-            let newEmployee = employee.dataValues;
-            let titles = await employee.getTitles();
-            let salaries = await employee.getSalaries();
-            
-
-            let newTitles = []
-            titles.forEach((title) => {
-                newTitles.push({
-                    title: title.dataValues.title,
-                    from_date: title.dataValues.from_date,
-                    to_date: title.dataValues.to_date
-                });
+        for(let i = 0; i < pages; i++){
+            let employees =  await Employee.findAll({
+                include: [Title, Salary, Department, DepartmentManager], 
+                order: [['emp_no', 'ASC']],
+                offset: i*1000,
+                limit: 1000
             });
-            newEmployee.titles = newTitles;
-
-            let newSalaries = []
-            salaries.forEach((salary) => {
-                newSalaries.push({
-                    salary: salary.dataValues.salary,
-                    from_date: salary.dataValues.from_date,
-                    to_date: salary.dataValues.to_date,
-                });
-            });
-            newEmployee.salaries = newSalaries;
-
-            console.log(newEmployee);
-        });
-
-        //employees.forEach(mysqlToJSON)
-        //console.log(employees);
+            employeeList.push(employees);
+        }
+        console.log(employeeList);
+        sequelize.close();
     } catch (error) { 
         console.error("Error log", error);
-    }
+    };
 };
-getAllEmployeesFromMySQL();
+getEmployeesFromMySQL();
+
+
+// let createMongoCollection = async function (employees) {
+//     try {
+//         let db = client.db("bd2m2.1");
+//         let collection = db.collection('employees');
+//         collection.insertMany()
+//     } catch (error) {
+//         console.log("Error log", error);
+//     };
+// };
