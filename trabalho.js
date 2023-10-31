@@ -70,14 +70,14 @@ const DepartmentEmployee = sequelize.define('DepartmentEmployee', {
 Employee.belongsToMany(Department, { through: DepartmentEmployee, foreignKey: 'emp_no'});
 Department.belongsToMany(Employee, { through: DepartmentEmployee, foreignKey: 'dept_no'});
 
-const DepartmentManager = sequelize.define('DepartmentManager', {
-    dept_no: { type: DataTypes.CHAR(4), primaryKey: true },
-    emp_no: { type: DataTypes.INTEGER, primaryKey: true },
-    from_date: { type: DataTypes.DATEONLY },
-    to_date: { type: DataTypes.DATEONLY }
-}, { tableName: 'dept_manager', timestamps: false });
-Department.hasMany(DepartmentManager, { foreignKey: 'dept_no'});
-Employee.hasMany(DepartmentManager, { foreignKey: 'emp_no'});
+// const DepartmentManager = sequelize.define('DepartmentManager', {
+//     dept_no: { type: DataTypes.CHAR(4), primaryKey: true },
+//     emp_no: { type: DataTypes.INTEGER, primaryKey: true },
+//     from_date: { type: DataTypes.DATEONLY },
+//     to_date: { type: DataTypes.DATEONLY }
+// }, { tableName: 'dept_manager', timestamps: false });
+// Department.belongsToMany(Employee, { through: DepartmentManager, foreignKey: 'dept_no'});
+// Employee.belongsToMany(Department, { through: DepartmentManager, foreignKey: 'emp_no'});
 
 let employeeList = []
 let getEmployeesFromMySQL = async function() {
@@ -87,12 +87,43 @@ let getEmployeesFromMySQL = async function() {
 
         for(let i = 0; i < pages; i++){
             let employees =  await Employee.findAll({
-                include: [Title, Salary, Department, DepartmentManager], 
+                //include: [Title, Salary, Department, DepartmentManager], 
+                include: [Title, Salary, Department], 
                 order: [['emp_no', 'ASC']],
                 offset: i*1000,
                 limit: 1000
             });
-            employeeList.push(employees);
+            employees.forEach(employee => {
+                let newEmployeeObject = employee.dataValues;
+                newEmployeeObject.titles = [];
+                newEmployeeObject.salaries = [];
+                newEmployeeObject.departments = [];
+                // newEmployeeObject.departmentManagers = [];
+
+                newEmployeeObject.Titles.forEach(title => {
+                    delete title.dataValues.emp_no;
+                    newEmployeeObject.titles.push(title.dataValues);
+                });
+
+                newEmployeeObject.Salaries.forEach(salary => {
+                    delete salary.dataValues.emp_no;
+                    newEmployeeObject.salaries.push(salary.dataValues);
+                });
+
+                newEmployeeObject.Departments.forEach(department => {
+                    delete department.dataValues.DepartmentEmployee;
+                    newEmployeeObject.departments.push(department.dataValues);
+                });
+
+                // newEmployeeObject.DepartmentManagers.forEach(departmentManager => {
+                //     newEmployeeObject.departmentManagers.push(departmentManager.dataValues);
+                // });
+
+                delete newEmployeeObject.Titles;
+                delete newEmployeeObject.Salaries;
+                delete newEmployeeObject.Departments;
+                employeeList.push(newEmployeeObject);
+            });
         }
         console.log(employeeList);
         sequelize.close();
