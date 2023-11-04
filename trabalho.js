@@ -6,29 +6,55 @@ const MYSQL_PASSWORD="a1b2c3d4";
 const DATABASE = "employees"; // Usando modelo testdb https://github.com/datacharmer/test_db
 const sequelize = new Sequelize(DATABASE , MYSQL_LOGIN, MYSQL_PASSWORD, {
   host: MYSQL_IP,
-  dialect: "mysql"
+  dialect: "mysql",
+  logging: false
 });
+// Habilita / Desabilita debug no código
+let debug = false;
 
-let connTest = async function() {
+let mySQLConnTest = async function() {
     try {
         await sequelize.authenticate();
         console.log('Connection has been established successfully.');
     } catch (error) {
-        console.error('Unable to connect to the database:', error);
+        console.error('Unable to connect to the MySQL database:', error);
     }
 };
-connTest();
+if(debug) mySQLConnTest();
 
 // Conexão do Banco de Dados MongoDB
-// const { MongoClient } = require('mongodb');
-// const uri = 'mongodb://localhost:27017/'; //$ mongo mongodb://<host>:<port>
-// const client = new MongoClient(uri);
-// client.connect().then(function() {
-//     client.db().admin().listDatabases().then(function(databases){
-//         console.log("Databases: ", databases);
-//     });
-// });
+const { MongoClient } = require('mongodb');
+const uri = 'mongodb://localhost:27017/'; //$ mongo mongodb://<host>:<port>
+const client = new MongoClient(uri);
+let db = client.db("univalibd2");
+let collection = db.collection('employees');
+let mongoConnTest = async function() {
+    try {
+        client.connect().then(function() {
+            client.db().admin().listDatabases().then(function(databases){
+                console.log("Databases: ", databases);
+            });
+        });
+    } catch (error) {
+        console.error('Unable to connect to the MongoDB database', error);
+    }
+}
+if (debug) mongoConnTest();
 
+collection.drop(function(err, delOK) {
+    if(err) throw err;
+    if(delOK) console.log("Collection deleted");
+    collection.close();
+});
+
+let insertMongoData = async function (employees) {
+    try {
+        collection.insertMany(employees);
+        if (debug) console.log("Inserido registros em employeeList no MongoDB");
+    } catch (error) {
+        console.error("Error log", error);
+    };
+};
 
 // Modelo employess
 const Employee = sequelize.define('Employee', {
@@ -83,12 +109,14 @@ let employeeList = []
 let getEmployeesFromMySQL = async function() {
     try {
         let amount = await Employee.count();
+        if (debug) console.log("Quantidade de registros encontrados na tabela employee: ", amount);
         let pages = Math.ceil(amount/1000);
+        if (debug) console.log("Quantidade de páginas da paginação da consulta SQL: ", pages);
 
         for(let i = 0; i < pages; i++){
             let employees =  await Employee.findAll({
                 //include: [Title, Salary, Department, DepartmentManager], 
-                include: [Title, Salary, Department], 
+                include: [Title, Salary, Department],
                 order: [['emp_no', 'ASC']],
                 offset: i*1000,
                 limit: 1000
@@ -124,6 +152,9 @@ let getEmployeesFromMySQL = async function() {
                 delete newEmployeeObject.Departments;
                 employeeList.push(newEmployeeObject);
             });
+            insertMongoData(employeeList);
+            employeeList = [];
+            console.log(`Executando página ${i}/${pages}`);
         }
         console.log(employeeList);
         sequelize.close();
@@ -134,12 +165,3 @@ let getEmployeesFromMySQL = async function() {
 getEmployeesFromMySQL();
 
 
-// let createMongoCollection = async function (employees) {
-//     try {
-//         let db = client.db("bd2m2.1");
-//         let collection = db.collection('employees');
-//         collection.insertMany()
-//     } catch (error) {
-//         console.log("Error log", error);
-//     };
-// };
