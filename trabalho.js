@@ -1,7 +1,10 @@
 // PROMPT
 const prompt = require('prompt-sync')({sigint: true}) // npm install --save prompt-sync
 
-// Conexão e mapeamento do Banco de Dados MySQL usando ORM Sequelize
+// Habilita / Desabilita debug no código
+let debug = false;
+
+// MYSQL Sequelize
 const { Sequelize, DataTypes} = require('sequelize'); //npm install --save sequelize , npm install --save mysql2
 const MYSQL_IP="localhost";
 const MYSQL_LOGIN="root";
@@ -10,10 +13,8 @@ const DATABASE = "employees"; // Usando modelo testdb https://github.com/datacha
 const sequelize = new Sequelize(DATABASE , MYSQL_LOGIN, MYSQL_PASSWORD, {
   host: MYSQL_IP,
   dialect: "mysql",
-  logging: false
+  logging: debug
 });
-// Habilita / Desabilita debug no código
-let debug = false;
 
 let mySQLConnTest = async function() {
     try {
@@ -25,12 +26,11 @@ let mySQLConnTest = async function() {
 };
 if(debug) mySQLConnTest();
 
-// Conexão do Banco de Dados MongoDB
+// MONGODB
 const { MongoClient } = require('mongodb');
 const uri = 'mongodb://localhost:27017/'; //$ mongo mongodb://<host>:<port>
 const client = new MongoClient(uri);
-let db = client.db("univalibd2");
-let collection = db.collection('employees');
+
 let mongoConnTest = async function() {
     try {
         client.connect().then(function() {
@@ -53,12 +53,23 @@ let deleteEmployeeCollection = async function(){
 }
 
 let insertMongoData = async function (employees) {
+    //await client.connect();
+    let db = client.db("univalibd2");
+    let collection = db.collection('employees');
+
     try {
-        collection.insertMany(employees);
+        //collection.insertMany(employees);
+        employees.forEach(employee => {
+            collection.updateOne(
+                {"emp_no": employee.emp_no}, // Filter
+                {$set: employee}, // Update
+                { upsert: true}); // Insert if not exists
+        })
         if (debug) console.log("Inserido registros em employeeList no MongoDB");
     } catch (error) {
         console.error("Error log", error);
     };
+    //client.close();
 };
 
 // Modelo employess
@@ -111,6 +122,7 @@ Department.belongsToMany(Employee, { through: DepartmentEmployee, foreignKey: 'd
 // Employee.belongsToMany(Department, { through: DepartmentManager, foreignKey: 'emp_no'});
 
 let migrateMySQLToMongo = async function() {
+    //await sequelize.authenticate();
     let employeeList = []
     try {
         let amount = await Employee.count();
@@ -128,6 +140,7 @@ let migrateMySQLToMongo = async function() {
             });
             employees.forEach(employee => {
                 let newEmployeeObject = employee.dataValues;
+                newEmployeeObject
                 newEmployeeObject.titles = [];
                 newEmployeeObject.salaries = [];
                 newEmployeeObject.departments = [];
@@ -161,7 +174,7 @@ let migrateMySQLToMongo = async function() {
             employeeList = [];
             console.log(`Executando página ${i}/${pages}`);
         }
-        sequelize.close();
+        //sequelize.close();
     } catch (error) { 
         console.error("Error log", error);
     };
@@ -188,7 +201,7 @@ async function menu() {
         }
         switch(option) {
             case 1:
-                await deleteEmployeeCollection();
+                //await deleteEmployeeCollection();
                 await migrateMySQLToMongo();
                 break;
             case 2:
