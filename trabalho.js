@@ -145,6 +145,30 @@ let getEmployeeByTitles = async function(title) {
     console.log("Total de registros:", count, "\n\n");
 };
 
+let getEmployeeByDepartment = async function(department) {
+    let db = client.db("univalibd2");
+    let collection = db.collection('employees');
+
+    let query = { "departments.dept_name": department };
+    let options = { sort: { emp_no: 1}};
+
+    let employees = [];
+
+    try {
+        employees = collection.find(query, options);
+    } catch (error) {
+        console.error("Erro", error);
+    }
+    console.log("\n\n*** Imprimindo resultados da consulta: ***");
+    console.log(`Funcionários do departamento = ${department}\n\n`);
+    let count = 0;
+    for await (const employee of employees){
+        console.log(employee);
+        count++;
+    };
+    console.log("Total de registros:", count, "\n\n");
+};
+
 let migrateMySQLToMongo = async function() {
     //await sequelize.authenticate();
     let employeeList = []
@@ -237,8 +261,8 @@ async function menu() {
                 await getEmployeeByTitles(promptTitle);
                 break
             case 4:
-                promptId = promptIdToQuery()
-                await getCategoryById(promptId)
+                let promptDepartment = prompt("Qual departamento deseja consultar? ");
+                await getEmployeeByDepartment(promptDepartment);
                 break
             case 5:
                 await getAllActors()
