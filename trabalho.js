@@ -44,34 +44,6 @@ let mongoConnTest = async function() {
 }
 if (debug) mongoConnTest();
 
-let deleteEmployeeCollection = async function(){
-    collection.drop(function(err, delOK) {
-        if(err) throw err;
-        if(delOK) console.log("Collection deleted");
-        collection.close();
-    });
-}
-
-let insertMongoData = async function (employees) {
-    //await client.connect();
-    let db = client.db("univalibd2");
-    let collection = db.collection('employees');
-
-    try {
-        //collection.insertMany(employees);
-        employees.forEach(employee => {
-            collection.updateOne(
-                {"emp_no": employee.emp_no}, // Filter
-                {$set: employee}, // Update
-                { upsert: true}); // Insert if not exists
-        })
-        if (debug) console.log("Inserido registros em employeeList no MongoDB");
-    } catch (error) {
-        console.error("Error log", error);
-    };
-    //client.close();
-};
-
 // Modelo employess
 const Employee = sequelize.define('Employee', {
     emp_no: { type: DataTypes.INTEGER, autoIncrement:true, primaryKey: true },
@@ -120,6 +92,58 @@ Department.belongsToMany(Employee, { through: DepartmentEmployee, foreignKey: 'd
 // }, { tableName: 'dept_manager', timestamps: false });
 // Department.belongsToMany(Employee, { through: DepartmentManager, foreignKey: 'dept_no'});
 // Employee.belongsToMany(Department, { through: DepartmentManager, foreignKey: 'emp_no'});
+
+let deleteEmployeeCollection = async function(){
+    collection.drop(function(err, delOK) {
+        if(err) throw err;
+        if(delOK) console.log("Collection deleted");
+        collection.close();
+    });
+}
+
+let insertMongoData = async function (employees) {
+    //await client.connect();
+    let db = client.db("univalibd2");
+    let collection = db.collection('employees');
+
+    try {
+        //collection.insertMany(employees);
+        employees.forEach(employee => {
+            collection.updateOne(
+                {"emp_no": employee.emp_no}, // Filter
+                {$set: employee}, // Update
+                { upsert: true}); // Insert if not exists
+        })
+        if (debug) console.log("Inserido registros em employeeList no MongoDB");
+    } catch (error) {
+        console.error("Error log", error);
+    };
+    //client.close();
+};
+
+let getEmployeeByTitles = async function(title) {
+    let db = client.db("univalibd2");
+    let collection = db.collection('employees');
+
+    let query = { "titles.title": title };
+    let options = { sort: { emp_no: 1}};
+
+    let employees = [];
+
+    try {
+        employees = collection.find(query, options);
+    } catch (error) {
+        console.error("Erro", error);
+    }
+    console.log("\n\n*** Imprimindo resultados da consulta: ***");
+    console.log(`Funcionários com title = ${title}\n\n`);
+    let count = 0;
+    for await (const employee of employees){
+        console.log(employee);
+        count++;
+    };
+    console.log("Total de registros:", count, "\n\n");
+};
 
 let migrateMySQLToMongo = async function() {
     //await sequelize.authenticate();
@@ -209,7 +233,8 @@ async function menu() {
                 await getFilmById(promptId)
                 break
             case 3:
-                await getAllCategories()
+                let promptTitle = prompt("Qual title deseja consultar? ");
+                await getEmployeeByTitles(promptTitle);
                 break
             case 4:
                 promptId = promptIdToQuery()
