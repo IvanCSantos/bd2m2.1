@@ -1,3 +1,6 @@
+// PROMPT
+const prompt = require('prompt-sync')({sigint: true}) // npm install --save prompt-sync
+
 // Conexão e mapeamento do Banco de Dados MySQL usando ORM Sequelize
 const { Sequelize, DataTypes} = require('sequelize'); //npm install --save sequelize , npm install --save mysql2
 const MYSQL_IP="localhost";
@@ -41,11 +44,13 @@ let mongoConnTest = async function() {
 }
 if (debug) mongoConnTest();
 
-collection.drop(function(err, delOK) {
-    if(err) throw err;
-    if(delOK) console.log("Collection deleted");
-    collection.close();
-});
+let deleteEmployeeCollection = async function(){
+    collection.drop(function(err, delOK) {
+        if(err) throw err;
+        if(delOK) console.log("Collection deleted");
+        collection.close();
+    });
+}
 
 let insertMongoData = async function (employees) {
     try {
@@ -105,8 +110,8 @@ Department.belongsToMany(Employee, { through: DepartmentEmployee, foreignKey: 'd
 // Department.belongsToMany(Employee, { through: DepartmentManager, foreignKey: 'dept_no'});
 // Employee.belongsToMany(Department, { through: DepartmentManager, foreignKey: 'emp_no'});
 
-let employeeList = []
-let getEmployeesFromMySQL = async function() {
+let migrateMySQLToMongo = async function() {
+    let employeeList = []
     try {
         let amount = await Employee.count();
         if (debug) console.log("Quantidade de registros encontrados na tabela employee: ", amount);
@@ -156,12 +161,55 @@ let getEmployeesFromMySQL = async function() {
             employeeList = [];
             console.log(`Executando página ${i}/${pages}`);
         }
-        console.log(employeeList);
         sequelize.close();
     } catch (error) { 
         console.error("Error log", error);
     };
 };
-getEmployeesFromMySQL();
 
-
+const displayMenuOptions = function() {
+    console.log("*** SELECIONE A OPÇÃO DESEJADA ***");
+    console.log("1. Sincroniza dados do MySQL para o MongoDB");
+    console.log("2. Consulta funcionário a partir de id do manager");
+    console.log("3. Consulta funcionário a partir de um title");
+    console.log("4. Consulta funcionário a partir de um departamento");
+    console.log("5. Relatório de média salarial de funcionários por departamento");
+    console.log("6. Sair");
+    console.log("");
+}
+async function menu() {
+    let option = 0
+    while(option !== 6){
+        displayMenuOptions()
+        option = parseInt(prompt("Selectione uma opção do menu: "));
+        if(option < 1 || option > 6) {
+            console.log("Escolha uma opção entre 1 e 6");
+            break;
+        }
+        switch(option) {
+            case 1:
+                await deleteEmployeeCollection();
+                await migrateMySQLToMongo();
+                break;
+            case 2:
+                promptId = promptIdToQuery()
+                await getFilmById(promptId)
+                break
+            case 3:
+                await getAllCategories()
+                break
+            case 4:
+                promptId = promptIdToQuery()
+                await getCategoryById(promptId)
+                break
+            case 5:
+                await getAllActors()
+                break
+            case 10:
+                console.log(typeof(option),": ", option);
+            default:
+                console.log(`Opção inválida ${option}!`);
+        }
+    }
+}
+menu();
