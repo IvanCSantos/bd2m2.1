@@ -121,6 +121,13 @@ let insertMongoData = async function (employees) {
     //client.close();
 };
 
+let createMongoIndexes = async function () {
+    let db = client.db("univalibd2");
+    let collection = db.collection('employees');
+    collection.createIndex({ "titles.title": "text" }, {default_language: 'en'});
+    collection.createIndex({ "departments.department": "text" }, {default_language: 'en'});
+}
+
 let getEmployeeByTitles = async function(title) {
     let db = client.db("univalibd2");
     let collection = db.collection('employees');
@@ -288,10 +295,11 @@ async function menu() {
             case 1:
                 //await deleteEmployeeCollection();
                 await migrateMySQLToMongo();
+                await createMongoIndexes();
                 break;
             case 2:
                 promptId = promptIdToQuery()
-                await getFilmById(promptId)
+                await getFilmById(promptId);
                 break
             case 3:
                 let promptTitle = prompt("Qual title deseja consultar? ");
@@ -304,7 +312,7 @@ async function menu() {
             case 5:
                 await getDepartmentsAverageWage();
                 break
-            case 10:
+            case 6:
                 console.log(typeof(option),": ", option);
             default:
                 console.log(`Opção inválida ${option}!`);
