@@ -169,6 +169,43 @@ let getEmployeeByDepartment = async function(department) {
     console.log("Total de registros:", count, "\n\n");
 };
 
+let getDepartmentsAverageWage = async function(department) {
+    let db = client.db("univalibd2");
+    let collection = db.collection('employees');
+
+    let employees = [];
+    let departments = {};
+
+    try {
+        employees = collection.find();
+    } catch (error) {
+        console.error("Erro", error);
+    }
+
+    for await (const employee of employees){
+        let salary = employee.salaries[employee.salaries.length -1].salary;
+        let department = employee.departments[employee.departments.length - 1].dept_name;
+        
+        if (departments[department] != undefined) {
+            departments[department].push(salary);
+        } else {
+            departments[department] = []
+        }
+    };
+
+    console.log("\n\n*** Médias salariais por departamento. ***")
+    for(const [key, value] of Object.entries(departments)) {
+        let sum = 0;
+        for(let i = 0; i < value.length; i++) {
+            sum+=value[i]
+        }
+        let media = sum / value.length;
+        media = media.toFixed(2);
+        console.log(`${key}: ${media}`);
+    }
+    console.log("\n\n");
+};
+
 let migrateMySQLToMongo = async function() {
     //await sequelize.authenticate();
     let employeeList = []
@@ -265,7 +302,7 @@ async function menu() {
                 await getEmployeeByDepartment(promptDepartment);
                 break
             case 5:
-                await getAllActors()
+                await getDepartmentsAverageWage();
                 break
             case 10:
                 console.log(typeof(option),": ", option);
