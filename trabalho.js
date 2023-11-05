@@ -124,8 +124,7 @@ let insertMongoData = async function (employees) {
 let createMongoIndexes = async function () {
     let db = client.db("univalibd2");
     let collection = db.collection('employees');
-    collection.createIndex({ "titles.title": "text" }, {default_language: 'en'});
-    collection.createIndex({ "departments.department": "text" }, {default_language: 'en'});
+    collection.createIndex({ "titles.title": "text", "departments.department": "text" }, { default_language: 'en' });
 }
 
 let getEmployeeByTitles = async function(title) {
@@ -175,6 +174,31 @@ let getEmployeeByDepartment = async function(department) {
     };
     console.log("Total de registros:", count, "\n\n");
 };
+
+let getEmployeeByManager = async function(manager) {
+    let db = client.db("univalibd2");
+    let collection = db.collection('employees');
+
+    let query = { "first_name": manager };
+    let options = { sort: { emp_no: 1}};
+
+    let employees = [];
+
+    try {
+        employees = collection.find(query, options);
+    } catch (error) {
+        console.error("Erro", error);
+    }
+    console.log("\n\n*** Imprimindo resultados da consulta: ***");
+    console.log(`Funcionários por Gerente = ${manager}\n\n`);
+    let count = 0;
+    for await (const employee of employees){
+        console.log(employee);
+        count++;
+    };
+    console.log("Total de registros:", count, "\n\n");
+};
+
 
 let getDepartmentsAverageWage = async function(department) {
     let db = client.db("univalibd2");
@@ -298,8 +322,8 @@ async function menu() {
                 await createMongoIndexes();
                 break;
             case 2:
-                promptId = promptIdToQuery()
-                await getFilmById(promptId);
+                let promptManager = prompt("Qual gerente deseja consultar? ");
+                await getEmployeeByManager(promptManager);
                 break
             case 3:
                 let promptTitle = prompt("Qual title deseja consultar? ");
